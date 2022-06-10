@@ -1,0 +1,49 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+cd /content/drive/MyDrive/ML
+
+df = pd.read_table('/content/drive/MyDrive/ML/Restaurant_Reviews.csv')
+x= df['Review'].values
+y= df['Liked'].values
+from sklearn.model_selection import train_test_split
+x_train,x_test,y_train,y_test = train_test_split(x,y,random_state=0)
+from sklearn.feature_extraction.text import CountVectorizer
+vect = CountVectorizer(stop_words ='english')
+x_train_vect = vect.fit_transform(x_train)
+x_test_vect = vect.transform(x_test)
+
+from sklearn.svm import SVC      
+model = SVC() 
+
+from sklearn.pipeline import make_pipeline
+text_model = make_pipeline(CountVectorizer(),SVC())
+
+text_model.fit(x_train,y_train)
+
+y_pred = text_model.predict(x_test)
+y_pred
+
+from sklearn.metrics import accuracy_score
+accuracy_score(y_pred,y_test)
+
+import joblib  
+joblib.dump(text_model,'sentiment')
+
+text_model = joblib.load('sentiment')
+
+!pip install streamlit --quiet
+!pip install pyngrok==4.1.1
+from pyngrok import ngrok
+%%writefile app.py 
+import streamlit as st
+import joblib 
+st.title("Sentiment Analysis")
+text_model = joblib.load('sentiment')
+ip = st.text_input('Enter your review:')
+op = text_model.predict([ip])
+if st.button('Liked?'):
+  st.title(op[0])
+!nohup streamlit run app.py & 
+url = ngrok.connect(port = '8501')
+url  
